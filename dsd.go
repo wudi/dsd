@@ -54,25 +54,39 @@ func (g *Gandi) Search(word string) (r bool) {
 
 	resp, err := client.Do(request)
 	if err != nil {
-		fmt.Printf("Driver[Gandi]: http request, %s\n", err.Error())
+		if debug {
+			fmt.Printf("Driver[Gandi]: http request, %s\n", err.Error())
+		}
 		return
 	}
 
-	contents, _ := ioutil.ReadAll(resp.Body)
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		if debug {
+			fmt.Printf("Driver[Gandi]: read io, %s\n", err.Error())
+		}
+		return
+	}
+
 	if debug {
 		fmt.Printf("%s\n%s\n", endpoint, string(contents))
 	}
 
 	var v []*GandiResp
 	if err := json.Unmarshal(contents, &v); err != nil {
-		fmt.Printf("Driver[Gandi]: json Unmarshal, %s\n", err.Error())
+		if debug {
+			fmt.Printf("Driver[Gandi]: json Unmarshal, %s\n", err.Error())
+		}
 		return
 	}
 
 	if len(v) > 0 {
-		if v[0].Available == "available" {
+		s := v[0].Available
+		if s == "available" {
 			r = true
-		} else if v[0].Available == "pending" {
+		} else if s == "error_ratelimited" {
+			fmt.Println("Driver[Gandi]: Rate limited")
+		} else if s == "pending" {
 			t++
 			goto RETRY
 		}

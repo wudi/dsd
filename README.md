@@ -1,7 +1,7 @@
 # dsd
 Domain Status Detector
 
-## Useage
+## Usage
 
 ```shell
 λ eagle [~] → go get -u github.com/eaglewu/dsd

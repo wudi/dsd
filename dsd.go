@@ -85,8 +85,9 @@ var words string = ""
 var concurrentNum int = 5
 var sleep time.Duration = 1 * time.Second
 var extensions string = ".com .cn .net"
-var timeout time.Duration = 10 * time.Second
+var timeout time.Duration = 3 * time.Second
 var debug bool = false
+var onlyPrintAvailable = false
 
 func init() {
 	flag.StringVar(&words, "w", words, "Words eg: apple mac (split with single space)")
@@ -95,6 +96,7 @@ func init() {
 	flag.DurationVar(&timeout, "t", timeout, "timeout")
 	flag.StringVar(&extensions, "e", extensions, "domain extensions, eg: .com .io .net")
 	flag.BoolVar(&debug, "d", debug, "debug")
+	flag.BoolVar(&onlyPrintAvailable, "a", onlyPrintAvailable, "only print available domains")
 	flag.Parse()
 }
 
@@ -124,7 +126,7 @@ func main() {
 			go func(ext string) {
 				if gandi.Search(ext) {
 					fmt.Printf("%s: \033[;32mavailable\033[0m\n", ext)
-				} else {
+				} else if !onlyPrintAvailable {
 					fmt.Printf("%s: unavailable\n", ext)
 				}
 

@@ -57,6 +57,10 @@ func (g *Gandi) Search(word string) (r bool) {
 	}
 
 	contents, _ := ioutil.ReadAll(resp.Body)
+	if debug {
+		fmt.Printf("%s\n%s\n", endpoint, string(contents))
+	}
+
 	var v []*GandiResp
 	if err := json.Unmarshal(contents, &v); err != nil {
 		fmt.Printf("Driver[Gandi]: json Unmarshal, %s\n", err.Error())
@@ -64,7 +68,7 @@ func (g *Gandi) Search(word string) (r bool) {
 	}
 
 	if len(v) > 0 {
-		if v[0].Available == "\033[;32m available \033[0m COOL" {
+		if v[0].Available == "available" {
 			r = true
 		} else if v[0].Available == "pending" {
 			t++
@@ -80,6 +84,7 @@ var concurrentNum int = 5
 var sleep time.Duration = 1 * time.Second
 var extensions string = ".com .cn .net"
 var timeout time.Duration = 3 * time.Second
+var debug bool = false
 
 func init() {
 	flag.StringVar(&words, "w", words, "Words eg: apple mac (split with single space)")
@@ -87,6 +92,7 @@ func init() {
 	flag.DurationVar(&sleep, "s", sleep, "sleep seconds")
 	flag.DurationVar(&timeout, "t", timeout, "timeout")
 	flag.StringVar(&extensions, "e", extensions, "domain extensions, eg: .com .io .net")
+	flag.BoolVar(&debug, "d", debug, "debug")
 	flag.Parse()
 }
 
@@ -115,7 +121,7 @@ func main() {
 		for _, e := range exts {
 			go func(ext string) {
 				if gandi.Search(ext) {
-					fmt.Printf("%s: available\n", ext)
+					fmt.Printf("%s: \033[;32mavailable\033[0m\n", ext)
 				} else {
 					fmt.Printf("%s: unavailable\n", ext)
 				}

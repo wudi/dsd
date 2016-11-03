@@ -64,7 +64,7 @@ func (g *Gandi) Search(word string) (r bool) {
 	}
 
 	if len(v) > 0 {
-		if v[0].Available == "available" {
+		if v[0].Available == "\033[;32m available \033[0m COOL" {
 			r = true
 		} else if v[0].Available == "pending" {
 			t++

@@ -13,7 +13,6 @@ var words string = ""
 var concurrentNum int = 5
 var sleep time.Duration = 1 * time.Second
 var extensions string = ".com .cn .net"
-var timeout time.Duration = 3 * time.Second
 var debug bool = false
 var onlyPrintAvailable = false
 
@@ -21,7 +20,6 @@ func init() {
 	flag.StringVar(&words, "w", words, "Words eg: apple mac (split with single space)")
 	flag.IntVar(&concurrentNum, "c", concurrentNum, "concurrent numbers")
 	flag.DurationVar(&sleep, "s", sleep, "sleep seconds")
-	flag.DurationVar(&timeout, "t", timeout, "timeout")
 	flag.StringVar(&extensions, "e", extensions, "domain extensions, eg: .com .io .net")
 	flag.BoolVar(&debug, "d", debug, "debug")
 	flag.BoolVar(&onlyPrintAvailable, "a", onlyPrintAvailable, "only print available domains")
@@ -53,7 +51,7 @@ func main() {
 				ns, err := net.LookupNS(domain)
 				if err != nil {
 					fmt.Printf("%s: \033[;32mavailable\033[0m\n", domain)
-				} else {
+				} else if !onlyPrintAvailable {
 					fmt.Printf("%s: unavailable\n", domain)
 				}
 

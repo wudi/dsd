@@ -8,8 +8,10 @@ Domain Status Detector
 
 λ eagle [~] → dsd -h
 Usage of dsd:
+  -a	only print available domains
   -c int
     	concurrent numbers (default 5)
+  -d	debug
   -e string
     	domain extensions, eg: .com .io .net (default ".com .cn .net")
   -s duration

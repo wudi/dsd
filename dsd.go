@@ -32,7 +32,9 @@ func NewGandi() *Gandi {
 }
 
 func (g *Gandi) Search(word string) (r bool) {
-	fmt.Printf("Driver[Gandi]: search word `%s`\n", word)
+	if debug {
+		fmt.Printf("Driver[Gandi]: search word `%s`\n", word)
+	}
 
 	endpoint := fmt.Sprintf(g.Endpoint, word)
 	request, _ := http.NewRequest(http.MethodGet, endpoint, nil)
@@ -83,7 +85,7 @@ var words string = ""
 var concurrentNum int = 5
 var sleep time.Duration = 1 * time.Second
 var extensions string = ".com .cn .net"
-var timeout time.Duration = 3 * time.Second
+var timeout time.Duration = 10 * time.Second
 var debug bool = false
 
 func init() {

@@ -2,98 +2,12 @@ package main
 
 import (
 	"flag"
-	"strings"
-	"time"
 	"fmt"
-	"net/http"
-	"encoding/json"
-	"io/ioutil"
+	"net"
+	"strings"
 	"sync"
+	"time"
 )
-
-type DriverFactory interface {
-	Search(word string) bool
-}
-
-type Gandi struct {
-	Endpoint string
-	Retry    int
-}
-
-type GandiResp struct {
-	Available string `json:"available"`
-}
-
-func NewGandi() *Gandi {
-	return &Gandi{
-		Endpoint: "https://www.gandi.net/domain/suggest/verbose_tlds?currency=CNY&tld=%s",
-		Retry:5,
-	}
-}
-
-func (g *Gandi) Search(word string) (r bool) {
-	if debug {
-		fmt.Printf("Driver[Gandi]: search word `%s`\n", word)
-	}
-
-	endpoint := fmt.Sprintf(g.Endpoint, word)
-	request, _ := http.NewRequest(http.MethodGet, endpoint, nil)
-	request.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.87 Safari/537.36")
-	request.Header.Add("Referer", "https://www.gandi.net/domain/suggest")
-	request.Header.Add("Accept", "application/json, text/plain, */*")
-
-	client := &http.Client{
-		Timeout:timeout,
-	}
-
-	t := 0
-	RETRY:
-	if t > g.Retry {
-		return
-	}
-
-	resp, err := client.Do(request)
-	if err != nil {
-		if debug {
-			fmt.Printf("Driver[Gandi]: http request, %s\n", err.Error())
-		}
-		return
-	}
-
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		if debug {
-			fmt.Printf("Driver[Gandi]: read io, %s\n", err.Error())
-		}
-		return
-	}
-
-	if debug {
-		fmt.Printf("%s\n%s\n", endpoint, string(contents))
-	}
-
-	var v []*GandiResp
-	if err := json.Unmarshal(contents, &v); err != nil {
-		if debug {
-			fmt.Printf("Driver[Gandi]: json Unmarshal, %s\n", err.Error())
-		}
-		return
-	}
-
-	if len(v) > 0 {
-		s := v[0].Available
-		if s == "available" {
-			r = true
-		} else if s == "error_ratelimited" {
-			fmt.Println("Driver[Gandi]: Rate limited")
-		} else if s == "pending" {
-			t++
-			goto RETRY
-		}
-	}
-
-	return
-}
 
 var words string = ""
 var concurrentNum int = 5
@@ -117,8 +31,6 @@ func init() {
 func main() {
 	w := strings.Split(words, " ")
 	exts := strings.Split(extensions, " ")
-	gandi := NewGandi()
-
 	if len(w) == 0 {
 		fmt.Println("Please input the domain word.")
 		return
@@ -137,18 +49,26 @@ func main() {
 
 		wg.Add(len(exts))
 		for _, e := range exts {
-			go func(ext string) {
-				if gandi.Search(ext) {
-					fmt.Printf("%s: \033[;32mavailable\033[0m\n", ext)
-				} else if !onlyPrintAvailable {
-					fmt.Printf("%s: unavailable\n", ext)
+			go func(domain string) {
+				ns, err := net.LookupNS(domain)
+				if err != nil {
+					fmt.Printf("%s: \033[;32mavailable\033[0m\n", domain)
+				} else {
+					fmt.Printf("%s: unavailable\n", domain)
 				}
 
+				if debug {
+					s := make([]string, len(ns))
+					for i, v := range ns {
+						s[i] = v.Host
+					}
+					fmt.Printf("LookupNS[%s]: %s\n", s)
+				}
 				wg.Done()
 			}(v + e)
 		}
 
-		if (i > 0) && (i % concurrentNum == 0) {
+		if (i > 0) && (i%concurrentNum == 0) {
 			time.Sleep(sleep)
 		}
 	}

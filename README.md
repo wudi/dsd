@@ -1,5 +1,5 @@
 # dsd
-Domain Status Detector
+Domain Status Detector by check nameserver(NS)
 
 ## Usage
 
